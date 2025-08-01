@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blistsy</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Morganite:wght@900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Harmattan&display=swap');
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f4eadc;
+      font-family: 'Harmattan', sans-serif;
+      color: #2d2d2d;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      font-family: 'Morganite', sans-serif;
+      font-size: 3rem;
+      margin-top: 20px;
+      color: #801e1e;
+      letter-spacing: 1px;
+    }
+
+    .input-section {
+      margin: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    input, textarea {
+      padding: 10px;
+      font-size: 1.2rem;
+      border: 1px solid #c2b9ae;
+      border-radius: 8px;
+      width: 250px;
+      margin-bottom: 10px;
+      background: #fffaf5;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1.1rem;
+      background: #801e1e;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      width: 90%;
+      max-width: 600px;
+    }
+
+    li {
+      background: #fffaf5;
+      border: 1px solid #c2b9ae;
+      margin: 10px 0;
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 1.2rem;
+      position: relative;
+    }
+
+    .author {
+      font-size: 0.9rem;
+      color: #555;
+      margin-top: 5px;
+    }
+
+    .done-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .done {
+      text-decoration: line-through;
+      color: #888;
+    }
+  </style>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBWxbdOdCmAZapqnq4YZgfmOqIXFEwpBas",
+      authDomain: "blist-e5f43.firebaseapp.com",
+      projectId: "blist-e5f43",
+      storageBucket: "blist-e5f43.firebasestorage.app",
+      messagingSenderId: "643828805222",
+      appId: "1:643828805222:web:43c8e8f6b149f913de07a7",
+      measurementId: "G-54V2F3XF9B"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const listRef = collection(db, "bucketItems");
+
+    const list = document.getElementById('bucketList');
+    const itemInput = document.getElementById('itemInput');
+    const nameInput = document.getElementById('nameInput');
+
+    async function addItem() {
+      const text = itemInput.value.trim();
+      const name = nameInput.value.trim();
+      if (!text || !name) return;
+      await addDoc(listRef, { text, name, done: false });
+      itemInput.value = '';
+    }
+
+    async function toggleDone(id, currentState) {
+      const docRef = doc(db, "bucketItems", id);
+      await updateDoc(docRef, { done: !currentState });
+    }
+
+    onSnapshot(listRef, (snapshot) => {
+      list.innerHTML = '';
+      snapshot.forEach((docSnap) => {
+        const entry = docSnap.data();
+        const li = document.createElement('li');
+        li.className = entry.done ? 'done' : '';
+        li.innerHTML = `
+          <div>${entry.text}</div>
+          <div class="author">— ${entry.name}</div>
+          <button class="done-btn" onclick="toggleDone('${docSnap.id}', ${entry.done})">${entry.done ? 'Undo' : 'Done'}</button>
+        `;
+        list.appendChild(li);
+      });
+    });
+
+    window.addItem = addItem;
+    window.toggleDone = toggleDone;
+  </script>
+</head>
+<body>
+  <h1>Bucket Buddies</h1>
+
+  <div class="input-section">
+    <input id="nameInput" type="text" placeholder="Your name" />
+    <textarea id="itemInput" placeholder="What's on your bucket list?"></textarea>
+    <button onclick="addItem()">Add</button>
+  </div>
+
+  <ul id="bucketList"></ul>
+</body>
+</html>
